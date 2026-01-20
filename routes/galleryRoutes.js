@@ -18,13 +18,13 @@ const router = express.Router();
 router.get("/", getAllPhotos);
 router.get("/:id", getPhotoById);
 
-// Upload (user or admin)
-router.post("/", auth, uploadPhoto);
+// Upload (admin only)
+router.post("/", auth, role("admin"), uploadPhoto);
 
 // Admin only
-router.put("/:id/approve", auth, role("admin"), approvePhoto);
-router.get("/admin/list/pending", auth, role("admin"), listPendingPhotos);
-router.get("/admin/list/all", auth, role("admin"), listAllPhotos);
+// router.put("/:id/approve", auth, role("admin"), approvePhoto);
+// router.get("/admin/list/pending", auth, role("admin"), listPendingPhotos);
+// router.get("/admin/list/all", auth, role("admin"), listAllPhotos);
 router.delete("/:id", auth, role("admin"), deletePhoto);
 
 module.exports = router;

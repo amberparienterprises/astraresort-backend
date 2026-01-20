@@ -43,10 +43,11 @@ const express = require('express');
 const auth = require('../middleware/authMiddleware');
 const upload = require('../middleware/upload'); // multer memoryStorage
 const { uploadImageToS3 } = require('../utils/uploadToS3');
+const role = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
-router.post('/image', auth, upload.single('image'), async (req, res) => {
+router.post('/image', auth,role("admin"), upload.single('image'), async (req, res) => {
   try {
     const { filename, overwrite } = req.body; // optional
     const { url, key } = await uploadImageToS3(req.file, filename, { overwrite: overwrite === 'true' });
