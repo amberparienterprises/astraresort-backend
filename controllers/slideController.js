@@ -20,3 +20,18 @@ exports.createSlide = async (req, res) => {
     res.status(400).json({ message: "Error creating slide", error: error.message });
   }
 };
+
+exports.deleteSlide = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deletedSlide = await Slide.findByIdAndDelete(id);
+  
+      if (!deletedSlide) {
+        return res.status(404).json({ message: "Slide not found" });
+      }
+  
+      res.status(200).json({ message: "Slide deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting slide", error: error.message });
+    }
+  };
