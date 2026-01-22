@@ -24,7 +24,8 @@ exports.getPhotoById = async (req, res) => {
 // Upload photo (admin = published, user = pending)
 exports.uploadPhoto = async (req, res) => {
   try {
-    const { title, description, imageUrl, yourName } = req.body;
+    // 1. Extract category from body
+    const { title, description, imageUrl, yourName, category } = req.body;
 
     let status = "pending";
     let uploadedByRole = "user";
@@ -43,6 +44,7 @@ exports.uploadPhoto = async (req, res) => {
       title,
       description,
       imageUrl,
+      category, // 2. Save the category
       yourName,
       uploadedBy,
       uploadedByRole,
@@ -53,7 +55,8 @@ exports.uploadPhoto = async (req, res) => {
     res.status(201).json(photo);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Failed to upload photo" });
+    // If user sends a category not in the enum, Mongoose will throw a validation error
+    res.status(500).json({ message: "Failed to upload photo", error: err.message });
   }
 };
 
