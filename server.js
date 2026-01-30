@@ -41,6 +41,10 @@ const calanderRoutes = require('./routes/calanderRoutes');
 const slideRoutes = require('./routes/slideRoutes');
 const videoRoutes = require('./routes/videoRoutes');
 const popupRoutes = require('./routes/popupRoutes');
+const roomRoutes = require('./routes/roomRoutes');
+const availabilityRoutes = require('./routes/availabilityRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
 
 const app = express();
 
@@ -80,6 +84,9 @@ app.use("/api/upload", uploadRoutes);
 app.use('/api/slides', slideRoutes);
 app.use('/videos', videoRoutes);
 app.use('/api/popup', popupRoutes);
-
+app.use('/api/rooms', roomRoutes);
+app.use('/api/search', availabilityRoutes); // Add this
+app.use('/api/admin', adminRoutes);
+app.use('/api/bookings', bookingRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(` Server running on ${PORT}`));
