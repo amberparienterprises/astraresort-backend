@@ -1,4 +1,5 @@
 const Blog = require('../models/Blog');
+const { deleteObjectFromS3 } = require("../utils/uploadToS3");
 
 // GET /blogs → list published blogs
 exports.getAllBlogs = async (req, res) => {
@@ -66,8 +67,48 @@ exports.updateBlog = async (req, res) => {
 
 // DELETE /blogs/:id
 exports.deleteBlog = async (req, res) => {
-  await Blog.findByIdAndDelete(req.params.id);
-  res.json({ message: 'Blog deleted' });
+  try {
+    const blog = await Blog.findById(req.params.id);
+
+    if (!blog) {
+      return res.status(404).json({ message: 'Blog not found' });
+    }
+
+    // 1. Collect all S3 URLs to delete
+    const urlsToDelete = [];
+
+    // Add meta image if it exists
+    if (blog.meta && blog.meta.image) {
+      urlsToDelete.push(blog.meta.image);
+    }
+
+    // Loop through content array to find body images
+    if (blog.content && blog.content.length > 0) {
+      blog.content.forEach(item => {
+        if (item.type === 'image' && item.value) {
+          urlsToDelete.push(item.value);
+        }
+      });
+    }
+
+    // 2. Perform deletions in S3
+    // We use Promise.allSettled so one failed S3 delete doesn't stop the others
+    await Promise.allSettled(
+      urlsToDelete.map(url => deleteObjectFromS3(url))
+    );
+
+    // 3. Delete the Blog record from MongoDB
+    await Blog.findByIdAndDelete(req.params.id);
+
+    res.json({ 
+      success: true, 
+      message: `Blog and ${urlsToDelete.length} associated S3 objects deleted.` 
+    });
+
+  } catch (error) {
+    console.error("Delete Error:", error);
+    res.status(500).json({ message: 'Failed to delete blog', error: error.message });
+  }
 };
 
 // PUT /blogs/:id/approve → approve pending

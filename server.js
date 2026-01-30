@@ -39,6 +39,8 @@ const galleryRoutes = require('./routes/galleryRoutes');
 const enquiryRoutes = require('./routes/enquiryRoutes');
 const calanderRoutes = require('./routes/calanderRoutes');
 const slideRoutes = require('./routes/slideRoutes');
+const videoRoutes = require('./routes/videoRoutes');
+const popupRoutes = require('./routes/popupRoutes');
 
 const app = express();
 
@@ -76,6 +78,8 @@ app.use('/gallery', galleryRoutes);
 app.use('/enquiries', enquiryRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use('/api/slides', slideRoutes);
+app.use('/videos', videoRoutes);
+app.use('/api/popup', popupRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(` Server running on ${PORT}`));

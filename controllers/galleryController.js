@@ -1,4 +1,5 @@
 const Gallery = require("../models/Gallery");
+const { deleteObjectFromS3 } = require("../utils/uploadToS3");
 
 // Public - list all published photos
 exports.getAllPhotos = async (req, res) => {
@@ -97,9 +98,27 @@ exports.listAllPhotos = async (req, res) => {
 // Admin - delete photo
 exports.deletePhoto = async (req, res) => {
   try {
+    const photo = await Gallery.findById(req.params.id);
+    
+    if (!photo) {
+      return res.status(404).json({ message: "Photo not found" });
+    }
+
+    // 1. Delete from S3 if imageUrl exists
+    if (photo.imageUrl) {
+      try {
+        await deleteObjectFromS3(photo.imageUrl);
+      } catch (s3Err) {
+        console.error("S3 Deletion Error:", s3Err);
+        // We continue anyway to keep DB and S3 in sync as much as possible
+      }
+    }
+
+    // 2. Delete from MongoDB
     await Gallery.findByIdAndDelete(req.params.id);
-    res.json({ message: "Photo deleted" });
+
+    res.json({ message: "Photo and S3 object deleted successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Failed to delete photo" });
+    res.status(500).json({ message: "Failed to delete photo", error: err.message });
   }
 };

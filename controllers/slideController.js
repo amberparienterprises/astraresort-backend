@@ -1,4 +1,5 @@
 const Slide = require('../models/Slide');
+const { deleteObjectFromS3 } = require("../utils/uploadToS3");
 
 // Get all slides
 exports.getSlides = async (req, res) => {
@@ -22,16 +23,35 @@ exports.createSlide = async (req, res) => {
 };
 
 exports.deleteSlide = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const deletedSlide = await Slide.findByIdAndDelete(id);
-  
-      if (!deletedSlide) {
-        return res.status(404).json({ message: "Slide not found" });
-      }
-  
-      res.status(200).json({ message: "Slide deleted successfully" });
-    } catch (error) {
-      res.status(500).json({ message: "Error deleting slide", error: error.message });
+  try {
+    const { id } = req.params;
+
+    // 1. Find the slide first to get the S3 URLs
+    const slide = await Slide.findById(id);
+
+    if (!slide) {
+      return res.status(404).json({ message: "Slide not found" });
     }
-  };
+
+    // 2. Collect image URLs
+    const imagesToDelete = [];
+    if (slide.img) imagesToDelete.push(slide.img);
+    if (slide.imgMobile) imagesToDelete.push(slide.imgMobile);
+
+    // 3. Delete from S3
+    await Promise.allSettled(
+      imagesToDelete.map(url => deleteObjectFromS3(url))
+    );
+
+    // 4. Delete from MongoDB
+    await Slide.findByIdAndDelete(id);
+
+    res.status(200).json({ 
+      success: true, 
+      message: "Slide and associated desktop/mobile images deleted successfully" 
+    });
+  } catch (error) {
+    console.error("Delete Slide Error:", error);
+    res.status(500).json({ message: "Error deleting slide", error: error.message });
+  }
+};
